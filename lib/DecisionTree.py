@@ -42,7 +42,7 @@ class DecisionTree:
             feats[i] = set(X[:,i])
         self.feature_dict = feats
         # expand the tree recursively
-        self.expand_tree(parent=None)
+        self.expand_tree(branch=None, parent=None)
 
     def predict(self, X):
         predictions = []
@@ -66,7 +66,7 @@ class DecisionTree:
                 subtree = subtree.children[x[next_split]]
         return prediction
 
-    def predictable(self, branch):
+    def predictable(self, branch, parent):
         """
         Check if a branch in the tree is predictable
         (not need to recurse on)
@@ -78,51 +78,52 @@ class DecisionTree:
             branch.predict = y[0]
             return True
         elif X.shape[0] == 0: # no sample
-            # what is the prediction in this case?
-            # just return a random choice
-            # TODO: actually need to create a node here, and predict using parent's
+            # create a node here, and predict using parent's
             # majority vote
-            branch.predict = random.choice(list(self.labels))
+            y_parent = parent.y
+            weights_parent = parent.weights
+            branch.predict = self.majority_vote(y_parent, weights_parent)
             return True
         elif branch.level == self.max_depth or len(branch.possible_features) == 0:
             # the tree reaches max depth or no remaining feature
             # predict using majority vote
-            best_choice = None
-            most_votes = -1
-            for choice in self.labels:
-                if weights is not None:
-                    cur_vote = np.sum(weights[y==choice])
-                else:
-                    cur_vote = np.sum(y==choice)
-                if cur_vote > most_votes:
-                    most_votes = cur_vote
-                    best_choice = choice
-            branch.predict = best_choice
+
+            # best_choice = None
+            # most_votes = -1
+            # for choice in self.labels:
+            #     if weights is not None:
+            #         cur_vote = np.sum(weights[y==choice])
+            #     else:
+            #         cur_vote = np.sum(y==choice)
+            #     if cur_vote > most_votes:
+            #         most_votes = cur_vote
+            #         best_choice = choice
+            branch.predict = self.majority_vote(y, weights)
             return True
         else:
             return False
 
-    def expand_tree(self, parent=None):
+    def expand_tree(self, branch=None, parent=None):
         """
         Recursive function to expand a tree.
         """
         # if the current branch is the root
-        if parent == None:
-            parent = self.tree
+        if branch is None:
+            branch = self.tree
         # find the current depth of the tree
-        if parent.level > self.depth:
-            self.depth = parent.level
-        X_cur = parent.X
-        y_cur = parent.y
-        weights = parent.weights
-        possible_features = parent.possible_features
+        if branch.level > self.depth:
+            self.depth = branch.level
+        X_cur = branch.X
+        y_cur = branch.y
+        weights = branch.weights
+        possible_features = branch.possible_features
         # base conditions
-        if self.predictable(parent):
+        if self.predictable(branch, parent):
             return
         # compute split feature
         split_feat = self.select_feature(y_cur, X_cur, possible_features,
                                          weights)
-        parent.split_feature = split_feat
+        branch.split_feature = split_feat
         feat_vals = self.feature_dict[split_feat]
         for each in feat_vals:
             child = Branch()
@@ -132,14 +133,14 @@ class DecisionTree:
             if weights is not None:
                 child.weights = weights[X_cur[:,split_feat]==each]
             # number of remaining features
-            child.possible_features = list(parent.possible_features)
+            child.possible_features = list(branch.possible_features)
             child.possible_features.remove(split_feat)
             # add depth info for the child
-            child.level = parent.level + 1
-            # link the child to the parent
-            parent.children[each] = child
+            child.level = branch.level + 1
+            # link the child to the current branch
+            branch.children[each] = child
             # call the function on children (recursively)
-            self.expand_tree(child)
+            self.expand_tree(branch=child, parent=branch)
         return True
 
     @classmethod
@@ -156,11 +157,24 @@ class DecisionTree:
             if info_gain > best_info_gain:
                 best_info_gain = info_gain
                 split_feat = feat
-        # if split_feat == -1:
-            # print(y)
-            # print(X)
-            # print(possible_features)
         return split_feat
+
+    def majority_vote(self, y, weights):
+        """
+        Output the label with majority vote.
+        """
+        best_choice = None
+        most_votes = -1
+        for choice in self.labels:
+            if weights is not None:
+                cur_vote = np.sum(weights[y==choice])
+            else:
+                cur_vote = np.sum(y==choice)
+            if cur_vote > most_votes:
+                most_votes = cur_vote
+                best_choice = choice
+        return best_choice
+
 
 
 class BoostedTree:
