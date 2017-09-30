@@ -2,8 +2,10 @@ import numpy as np
 import random
 import sys
 sys.path.insert(0, '/Users/trimcao/Dropbox/Richardson/Fall-2017/cs6375-ml-ruozzi/solution/lib')
+sys.path.insert(0, '/home/trimcao/Dropbox/Richardson/Fall-2017/cs6375-ml-ruozzi/solution/lib')
 # print(sys.path)
 from SVM import SVMPrimal, SVMDual
+from kNN import kNN
 
 def read_in(file_path):
     X = []
@@ -40,12 +42,18 @@ def primal():
 
 
 def dual():
+    print('\nPart 2: SVM Dual')
     # grid search for best c and best sigma
-    c_test = [10**i for i in range(9)]
+    # c_test = [10**i for i in range(9)]
+    # sigma_test = [10**i for i in range(-1, 4)]
+
+    c_test = [10**i for i in range(7,9)]
     sigma_test = [10**i for i in range(-1, 4)]
 
-    c_test = [10**i for i in range(2)]
-    sigma_test = [10**i for i in range(0, 2)]
+    print('Computing kernel matrices...')
+    k_matrices = {}
+    for sigma in sigma_test:
+        k_matrices[sigma] = SVMDual.kernel_matrix(X_train, sigma)
 
     c_best = -1
     sigma_best = -1
@@ -53,13 +61,13 @@ def dual():
     for c in c_test:
         for sigma in sigma_test:
             clf = SVMDual()
-            clf.fit(X_train, y_train, c=c, sigma=sigma)
+            clf.fit(X_train, y_train, c=c, sigma=sigma, k_matrix=k_matrices[sigma])
             train_preds = clf.predict(X_train)
             train_acc = clf.accuracy(y_train, train_preds)
             valid_preds = clf.predict(X_valid)
             valid_acc = clf.accuracy(y_valid, valid_preds)
             print('c =', c, ';', 'sigma =', sigma)
-            print('training set accuracy =', round(train_acc,4), ';',
+            print('train set accuracy =', round(train_acc,4), ';',
                     'valid set accuracy =', round(valid_acc,4), '\n')
             if valid_acc > best_acc:
                 best_acc = valid_acc
@@ -76,11 +84,23 @@ def dual():
     print('using c =', c_best, 'and', 'sigma =', sigma)
     print('accuracy on test set:', acc)
 
+
+def kNearest():
+    print('\nPart 3: k-Nearest Neighbor')
+    k_test = [1, 5, 11, 15, 21]
+    for k in k_test:
+        clf = kNN(X_train, y_train, k=k)
+        preds = clf.predict(X_test)
+        print('k =', k, ';', 'accuracy =', np.mean(preds==y_test))
+
+
 if __name__ == "__main__":
     # read in the data
     X_train, y_train = read_in('./hw2_data/wdbc_train.data')
     X_valid, y_valid = read_in('./hw2_data/wdbc_valid.data')
     X_test, y_test = read_in('./hw2_data/wdbc_test.data')
     # run code
-    primal()
-    dual()
+
+    # primal()
+    # dual()
+    kNearest()

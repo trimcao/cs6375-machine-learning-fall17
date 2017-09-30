@@ -65,7 +65,7 @@ class SVMDual:
         self.Delta = None # Lagrangian variables
         self.b = None # bias
 
-    def fit(self, X, y, c=1, sigma=0.1):
+    def fit(self, X, y, c=1, sigma=0.1, k_matrix=None):
         """
         Train a SVM classifier using Dual problem and Gaussian Kernel.
         """
@@ -81,7 +81,8 @@ class SVMDual:
         b = cvx.Variable()
         Delta = cvx.Variable(self.N) # Lagrangian multipliers
         # Set up the dual problem
-        k_matrix = self.kernel_matrix(X, sigma)
+        if k_matrix is None:
+            k_matrix = self.kernel_matrix(X, sigma)
         first_term = cvx.quad_form(cvx.mul_elemwise(y, Delta), k_matrix)
         second_term = cvx.sum_entries(Delta)
         loss = -0.5*first_term + second_term
@@ -91,7 +92,8 @@ class SVMDual:
         constraints.append(dual_sum == 0)
         # instantiate the problem
         prob = cvx.Problem(cvx.Maximize(loss), constraints)
-        prob.solve()
+        prob.solve(max_iters=200)
+        # prob.solve(solver='CVXOPT', kktsolver='ROBUST_KKTSOLVER')
         # find bias term
         self.Delta = Delta.value
         self.find_bias(Delta, X, y)
@@ -124,16 +126,22 @@ class SVMDual:
         """
         return np.exp(-np.dot((x-z),(x-z)) / (2*sigma**2))
 
-    def kernel_matrix(self, X, sigma):
+    @classmethod
+    def kernel_matrix(cls, X, sigma):
         """
         Compute kernel matrix.
         """
-        N = self.N
+        N = X.shape[0]
         k_matrix = np.zeros((N, N))
         for i in range(N):
             for j in range(N):
-                k_matrix[i, j] = self.gaussian_kernel(X[i], X[j], sigma)
+                value = cls.gaussian_kernel(X[i], X[j], sigma)
+                if not np.isclose(value, 0):
+                    k_matrix[i, j] = value
+                else:
+                    k_matrix[i, j] = 0
         return k_matrix
+
 
     def find_bias(self, Delta, X, y):
         bias = None
