@@ -22,10 +22,11 @@ class kNN:
         self.labels = set(y_train)
 
     def fit(self, X, y):
-        # probably no fitting here
+        # no fitting here
         pass
 
     def predict(self, X):
+        # first normalize the test set
         X_normed = (X-self.mean) / self.std
         preds = np.zeros(X_normed.shape[0])
         for i in range(X_normed.shape[0]):
@@ -55,6 +56,12 @@ class kNN:
             # print(distance)
             # print(queue.queue)
         # majority vote from k nearest neighbors
+        return self.majority_vote(queue)
+
+    def majority_vote(self, queue):
+        """
+        Find the label with majority vote.
+        """
         count = {label:0 for label in self.labels}
         while not queue.empty():
             next_neighbor = queue.get()
@@ -68,7 +75,6 @@ class kNN:
                 most_votes = cur_vote
                 best_label = label
         return best_label
-
 
     @classmethod
     def normalize(cls, X):

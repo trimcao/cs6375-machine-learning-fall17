@@ -1,3 +1,9 @@
+"""
+SVM Primal and Dual implementation
+Author: Tri Minh Cao
+Email: trimcao@gmail.com
+Date: September 2017
+"""
 
 import numpy as np
 import cvxpy as cvx

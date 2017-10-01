@@ -1,3 +1,10 @@
+"""
+Utilities for ML algorithms
+Author: Tri Minh Cao
+Email: trimcao@gmail.com
+Date: September 2017
+"""
+
 import numpy as np
 
 def probability(y, weights=None):
@@ -49,8 +56,6 @@ def conditional_probability(y, x, weights=None):
                     if y_cur == each_y and x_cur == each_x:
                         num_true += 1
                 prob_dict[each_y][each_x] = (num_true/num_samples) / prob_x[each_x]
-            # normalize (not needed)
-            # prob_dict[each_y] = normalize(prob_dict[each_y])
     else:
         for each_y in choices_y:
             prob_dict[each_y] = {}

@@ -1,3 +1,10 @@
+"""
+Decision Tree
+Author: Tri Minh Cao
+Email: trimcao@gmail.com
+Date: September 2017
+"""
+
 import numpy as np
 from util import probability, conditional_probability
 from util import entropy, conditional_entropy
@@ -29,7 +36,7 @@ class DecisionTree:
         self.max_depth = depth
         self.depth = 0
 
-    def fit(self, X, y, weights=None):
+    def fit(self, X, y, weights=None, split_feat=None):
         self.tree.X = X
         self.tree.y = y
         self.tree.weights = weights
@@ -42,7 +49,7 @@ class DecisionTree:
             feats[i] = set(X[:,i])
         self.feature_dict = feats
         # expand the tree recursively
-        self.expand_tree(branch=None, parent=None)
+        self.expand_tree(branch=None, parent=None, split_feat=split_feat)
 
     def predict(self, X):
         predictions = []
@@ -87,23 +94,12 @@ class DecisionTree:
         elif branch.level == self.max_depth or len(branch.possible_features) == 0:
             # the tree reaches max depth or no remaining feature
             # predict using majority vote
-
-            # best_choice = None
-            # most_votes = -1
-            # for choice in self.labels:
-            #     if weights is not None:
-            #         cur_vote = np.sum(weights[y==choice])
-            #     else:
-            #         cur_vote = np.sum(y==choice)
-            #     if cur_vote > most_votes:
-            #         most_votes = cur_vote
-            #         best_choice = choice
             branch.predict = self.majority_vote(y, weights)
             return True
         else:
             return False
 
-    def expand_tree(self, branch=None, parent=None):
+    def expand_tree(self, branch=None, parent=None, split_feat=None):
         """
         Recursive function to expand a tree.
         """
@@ -121,8 +117,9 @@ class DecisionTree:
         if self.predictable(branch, parent):
             return
         # compute split feature
-        split_feat = self.select_feature(y_cur, X_cur, possible_features,
-                                         weights)
+        if split_feat is None:
+            split_feat = self.select_feature(y_cur, X_cur, possible_features,
+                                                weights)
         branch.split_feature = split_feat
         feat_vals = self.feature_dict[split_feat]
         for each in feat_vals:
