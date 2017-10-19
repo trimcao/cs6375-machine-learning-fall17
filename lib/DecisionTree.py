@@ -322,6 +322,13 @@ class BoostedTree:
                                               stage, error)
             self.weight_list.append(new_weights)
 
+    def gen_tree1(self, attributes, X, y):
+        """
+        Brute-force method to solve problem 2, pset3, ML Fall 2017.
+                   a
+                 /   \
+                b     c
+        """        
 
     def gen_tree1(self, attributes, X, y, weights=None):
         """
