@@ -1,0 +1,8 @@
+.DS_Store
+pset*/.DS_Store
+pset*/.ipynb_checkpoints
+lib/__pycache__
+*.docx
+*.odt
+*.pptx
+*.zip
